@@ -17,6 +17,11 @@ model User {
   appointments Appointment[]
   deals        Deal[]
   
+  // Stats für Admin-Dashboard
+  totalCalls    Int     @default(0)
+  totalWins     Int     @default(0)
+  totalRevenue  Decimal @db.Decimal(12, 2) @default(0)
+  
   @@map("users")
 }
 
@@ -43,6 +48,8 @@ model Lead {
   email       String?
   phone       String
   campaignId  String
+  source      String   @default("facebook") // facebook, manual, website, etc.
+  cost        Decimal? @db.Decimal(10, 2)   // Kosten pro Lead (CPL)
   createdAt   DateTime @default(now())
   
   campaign    Campaign @relation(fields: [campaignId], references: [id])
@@ -57,10 +64,14 @@ model Appointment {
   closerId    String
   scheduledAt DateTime
   status      AppointmentStatus @default(SCHEDULED)
-  noShowReason String?
+  noShowReason String? // Freitext bei NO_SHOW_OTHER
   notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  
+  // Show-Up Rate Tracking
+  showedUp    Boolean  @default(false)
+  callDuration Int?    // in Minuten
   
   lead        Lead     @relation(fields: [leadId], references: [id])
   closer      User     @relation(fields: [closerId], references: [id])
@@ -77,14 +88,21 @@ model Deal {
   productPrice    Decimal  @db.Decimal(10, 2)
   paymentType     PaymentType
   
+  // Einmalzahlung
+  fullAmount      Decimal? @db.Decimal(10, 2)
+  
+  // Ratenzahlung
   downPayment     Decimal? @db.Decimal(10, 2)
   monthlyRate     Decimal? @db.Decimal(10, 2)
   numberOfRates   Int?
   
-  paidAmount      Decimal? @db.Decimal(10, 2)
+  // Automatische Berechnungen
+  totalValue      Decimal  @db.Decimal(12, 2) // Gesamtvolumen
+  paidAmount      Decimal? @db.Decimal(10, 2) // Bereits gezahlt
   
+  // Tracking
   closedAt        DateTime?
-  lostReason      String?
+  lostReason      String?  // Freitext bei LOST_OTHER
   followUpDate    DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -123,18 +141,40 @@ enum CampaignStatus {
 
 enum AppointmentStatus {
   SCHEDULED
-  NO_SHOW
   COMPLETED
+  NO_SHOW_FORGOT
+  NO_SHOW_SICK
+  NO_SHOW_GHOSTING
+  NO_SHOW_OTHER
+  CANCELLED
 }
 
 enum DealStatus {
   PENDING
   WON
-  LOST
+  LOST_TOO_EXPENSIVE
+  LOST_NO_NEED
+  LOST_COMPETITOR
+  LOST_OTHER
   FOLLOW_UP
 }
 
 enum PaymentType {
   PAYMENT_FULL
   PAYMENT_INSTALLMENTS
+}
+
+// Admin Dashboard - Tägliche Stats
+model DailyStats {
+  id          String   @id @default(cuid())
+  date        DateTime @unique
+  totalLeads  Int      @default(0)
+  totalCalls  Int      @default(0)
+  totalWins   Int      @default(0)
+  totalRevenue Decimal @db.Decimal(12, 2) @default(0)
+  showUpRate  Float    @default(0) // in Prozent
+  conversionRate Float @default(0) // in Prozent
+  createdAt   DateTime @default(now())
+  
+  @@map("daily_stats")
 }
