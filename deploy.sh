@@ -50,7 +50,7 @@ npm install
 # 5. .env Datei erstellen
 echo "🔧 .env Datei erstellen..."
 cat > .env << 'EOF'
-DATABASE_URL="postgresql://postgres:password@localhost:5432/sales_tracker"
+DATABASE_URL="postgresql://salesuser:salespass@localhost:5432/salestracker"
 NODE_ENV="production"
 JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
 EOF
