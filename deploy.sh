@@ -18,9 +18,14 @@ apt upgrade -y
 # 2. Docker installieren
 echo "🐳 Docker installieren..."
 if ! command -v docker &> /dev/null; then
-    apt install -y docker.io docker-compose
+    apt install -y docker.io docker-compose-plugin
     systemctl enable docker
     systemctl start docker
+fi
+
+# Docker Compose sicherstellen
+if ! command -v docker-compose &> /dev/null; then
+    apt install -y docker-compose
 fi
 
 # 3. Node.js installieren (mit Konflikt-Lösung)
