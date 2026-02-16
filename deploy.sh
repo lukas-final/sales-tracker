@@ -47,7 +47,15 @@ fi
 echo "📦 Abhängigkeiten installieren..."
 npm install
 
-# 5. Docker starten
+# 5. .env Datei erstellen
+echo "🔧 .env Datei erstellen..."
+cat > .env << 'EOF'
+DATABASE_URL="postgresql://postgres:password@localhost:5432/sales_tracker"
+NODE_ENV="production"
+JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
+EOF
+
+# 6. Docker starten
 echo "🐳 PostgreSQL Datenbank starten..."
 docker-compose up -d
 
@@ -55,7 +63,7 @@ docker-compose up -d
 echo "⏳ Warte auf Datenbank..."
 sleep 15
 
-# 6. Datenbank migrieren
+# 7. Datenbank migrieren
 echo "🗄️ Datenbank einrichten..."
 npx prisma generate
 npx prisma db push --accept-data-loss
