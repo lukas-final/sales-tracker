@@ -23,11 +23,19 @@ if ! command -v docker &> /dev/null; then
     systemctl start docker
 fi
 
-# 3. Node.js installieren
+# 3. Node.js installieren (mit Konflikt-Lösung)
 echo "📦 Node.js installieren..."
 if ! command -v node &> /dev/null; then
-    curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-    apt install -y nodejs npm
+    # Alte Node.js Versionen entfernen (falls vorhanden)
+    apt remove --purge nodejs npm -y 2>/dev/null || true
+    apt autoremove -y
+    
+    # NodeSource Repository für Node.js 20
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+    apt install -y nodejs
+    
+    echo "✅ Node.js $(node --version) installiert"
+    echo "✅ NPM $(npm --version) installiert"
 fi
 
 # 4. Dependencies installieren
