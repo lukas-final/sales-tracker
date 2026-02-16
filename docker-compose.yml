@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sales-tracker-db
+    environment:
+      POSTGRES_USER: salesuser
+      POSTGRES_PASSWORD: salespass
+      POSTGRES_DB: salestracker
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U salesuser -d salestracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Optional: Adminer für DB-Verwaltung
+  adminer:
+    image: adminer
+    container_name: sales-tracker-adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:

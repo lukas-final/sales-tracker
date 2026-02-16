@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      Role     @default(CLOSER)
+  createdAt DateTime @default(now())
+  
+  appointments Appointment[]
+  deals        Deal[]
+  
+  @@map("users")
+}
+
+model Campaign {
+  id          String   @id @default(cuid())
+  facebookId  String?  @unique
+  name        String
+  budget      Decimal  @db.Decimal(10, 2)
+  status      CampaignStatus @default(ACTIVE)
+  startDate   DateTime
+  endDate     DateTime?
+  createdAt   DateTime @default(now())
+  
+  leads       Lead[]
+  
+  @@map("campaigns")
+}
+
+model Lead {
+  id          String   @id @default(cuid())
+  facebookId  String?
+  firstName   String
+  lastName    String
+  email       String?
+  phone       String
+  campaignId  String
+  createdAt   DateTime @default(now())
+  
+  campaign    Campaign @relation(fields: [campaignId], references: [id])
+  appointment Appointment?
+  
+  @@map("leads")
+}
+
+model Appointment {
+  id          String   @id @default(cuid())
+  leadId      String   @unique
+  closerId    String
+  scheduledAt DateTime
+  status      AppointmentStatus @default(SCHEDULED)
+  noShowReason String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  lead        Lead     @relation(fields: [leadId], references: [id])
+  closer      User     @relation(fields: [closerId], references: [id])
+  deal        Deal?
+  
+  @@map("appointments")
+}
+
+model Deal {
+  id              String   @id @default(cuid())
+  appointmentId   String   @unique
+  closerId        String
+  status          DealStatus @default(PENDING)
+  productPrice    Decimal  @db.Decimal(10, 2)
+  paymentType     PaymentType
+  
+  downPayment     Decimal? @db.Decimal(10, 2)
+  monthlyRate     Decimal? @db.Decimal(10, 2)
+  numberOfRates   Int?
+  
+  paidAmount      Decimal? @db.Decimal(10, 2)
+  
+  closedAt        DateTime?
+  lostReason      String?
+  followUpDate    DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  appointment     Appointment @relation(fields: [appointmentId], references: [id])
+  closer          User     @relation(fields: [closerId], references: [id])
+  payments        Payment[]
+  
+  @@map("deals")
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  dealId      String
+  amount      Decimal  @db.Decimal(10, 2)
+  paidAt      DateTime
+  method      String?
+  note        String?
+  
+  deal        Deal     @relation(fields: [dealId], references: [id])
+  
+  @@map("payments")
+}
+
+enum Role {
+  ADMIN
+  CLOSER
+  MANAGER
+}
+
+enum CampaignStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  NO_SHOW
+  COMPLETED
+}
+
+enum DealStatus {
+  PENDING
+  WON
+  LOST
+  FOLLOW_UP
+}
+
+enum PaymentType {
+  PAYMENT_FULL
+  PAYMENT_INSTALLMENTS
+}
